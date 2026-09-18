@@ -1,0 +1,11 @@
+<?php $v=$old?:($contest??[]);$action=$contest?'/organizer/contests/'.$contest['contest_id']:'/organizer/contests';$fmt=fn($x)=>$x?date('Y-m-d\TH:i',strtotime((string)$x)):'';?>
+<div class="section-head"><div><h2><?=$contest?'Edit contest':'Create contest'?></h2><p class="muted">Saving an approved contest returns it to draft for review.</p></div><a class="button-outline" href="<?=e(url('/organizer/contests'))?>">Back</a></div>
+<form class="card form-grid" method="post" action="<?=e(url($action))?>"><?=csrf_field()?>
+<div class="field"><label for="title">Contest title</label><input id="title" name="title" data-slug-source="slug" value="<?=e($v['title']??$v['contest_title']??'')?>" required><?php if(isset($errors['title'])):?><span class="field-error"><?=e($errors['title'])?></span><?php endif;?></div>
+<div class="field"><label for="slug">URL slug</label><input id="slug" name="slug" value="<?=e($v['slug']??'')?>" required></div>
+<div class="field field-full"><label for="description">Description</label><textarea id="description" name="description"><?=e($v['description']??'')?></textarea></div>
+<div class="field"><label for="start_time">Start time</label><input id="start_time" type="datetime-local" name="start_time" value="<?=e($old['start_time']??$fmt($v['start_time']??null))?>" required></div>
+<div class="field"><label for="end_time">End time</label><input id="end_time" type="datetime-local" name="end_time" value="<?=e($old['end_time']??$fmt($v['end_time']??null))?>" required></div>
+<div class="field"><label for="deadline">Registration deadline</label><input id="deadline" type="datetime-local" name="deadline" value="<?=e($old['deadline']??$fmt($v['registration_deadline']??null))?>" required></div>
+<div class="field"><label for="visibility">Visibility</label><select id="visibility" name="visibility"><option value="PUBLIC" <?=($v['visibility']??'PUBLIC')==='PUBLIC'?'selected':''?>>Public</option><option value="PRIVATE" <?=($v['visibility']??'')==='PRIVATE'?'selected':''?>>Private</option></select></div>
+<?php if($errors):?><div class="field-full field-error"><?=e(implode(' ',$errors))?></div><?php endif;?><div class="field-full actions"><button class="button">Save contest</button><a class="button-outline" href="<?=e(url('/organizer/contests'))?>">Cancel</a></div></form>

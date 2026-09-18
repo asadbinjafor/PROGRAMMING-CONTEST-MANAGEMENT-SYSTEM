@@ -1,0 +1,13 @@
+[PHP]
+extension_dir = "C:\php\ext"
+extension = php_oci8_19.dll
+date.timezone = Asia/Dhaka
+display_errors = On
+display_startup_errors = On
+log_errors = On
+error_reporting = E_ALL
+default_charset = "UTF-8"
+session.use_strict_mode = 1
+session.cookie_httponly = 1
+session.cookie_samesite = Lax
+

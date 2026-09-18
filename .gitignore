@@ -1,0 +1,6 @@
+/.env
+/vendor/
+/storage/logs/*.log
+/tmp/
+*.swp
+.DS_Store

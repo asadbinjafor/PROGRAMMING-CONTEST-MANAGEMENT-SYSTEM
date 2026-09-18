@@ -1,0 +1,1 @@
+<section class="card status-page"><div class="status-code"><?=e($code)?></div><h2><?=e($title)?></h2><p class="muted"><?=e($message)?></p><a class="button" href="<?=e(url(user()?'/dashboard':'/'))?>">Go to a safe page</a></section>

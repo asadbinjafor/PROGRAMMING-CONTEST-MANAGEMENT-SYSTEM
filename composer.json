@@ -1,0 +1,19 @@
+{
+  "name": "aiub/pcms",
+  "description": "Programming Contest Management System",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "ext-oci8": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "PCMS\\": "app/"
+    }
+  },
+  "scripts": {
+    "lint": "php tests/lint.php",
+    "test": "php tests/run.php"
+  }
+}
+
