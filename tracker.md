@@ -94,6 +94,7 @@ The main cross-artifact problem is inconsistency. The database samples use PCMS,
 | DB-018 | Medium | Real judging detail is not modeled | Only one final verdict/metrics pair is stored; no per-test result, compiler/runtime version, judge message, or queue state exists | Decide academic vs working-judge scope; add judge entities only if the application will execute code |
 | DB-019 | Low | Sample coverage is too shallow | Five contests have one problem and one test case each, limiting relationship and aggregation tests | Add multi-problem, multi-test, multi-user, duplicate-attempt, and empty-result fixtures |
 | DB-020 | Low | Delete/update behavior is unspecified | No cascade/restrict policy is described for parent records | Document lifecycle rules and implement explicit FK actions/procedures |
+| DB-021 | High | Private contests are exposed on public routes | An imported `PRIVATE` contest is returned by public contest detail, leaderboard, and announcements routes | Enforce visibility and authorization consistently before publishing real private contests |
 
 ### 5.2 Figma and product UX
 
@@ -265,6 +266,7 @@ Legend: `[ ]` not started, `[~]` in progress, `[x]` complete, `[!]` blocked.
 | 2026-09-15 | Audited the complete 73-page report and all 7 exported Figma screens; created this tracker | Discovery complete; blockers and prioritized backlog documented | Close the scope/brand/Oracle/data decisions, then start P0-01 and P0-02 |
 | 2026-09-15 | Built the PHP/Oracle application foundation, role workflows, responsive PCMS UI, executable SQL, tests, and documentation | Oracle clean install passed with zero invalid objects; 5 negative DB tests, PHP lint, and 68 smoke assertions passed | Install a PHP 8.x-compatible Oracle 11.2+ client/server and OCI8, then run live role-based HTTP E2E and final visual/accessibility audit |
 | 2026-09-18 | Reviewed all 5 slides and the full embedded 23:33 connection tutorial; configured PHP OCI8 3.4.1 with Instant Client 19.26 and connected PCMS to Oracle XE | Live schema queries, 4 public pages, 3 role dashboards, 3 role pages, and 3 authorization boundaries passed; pagination bind and view-data shadowing defects fixed | Add rollback-based mutation E2E, automated WCAG scan, and production deployment services |
+| 2026-09-20 | Imported the report's five historical contests and related records into the live PCMS Oracle schema using an idempotent, transactional importer | Verification, Oracle connection, and live HTTP checks pass; imported records appear on web routes | Fix DB-021 before treating imported private data as confidential; retain disabled status for imported historical accounts |
 
 ## 11. Tracker maintenance rules
 
