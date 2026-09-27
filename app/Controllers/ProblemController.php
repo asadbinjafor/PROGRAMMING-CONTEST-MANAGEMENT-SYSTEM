@@ -17,14 +17,14 @@ final class ProblemController extends BaseController
     public function index(string $contestId): never
     {
         $contest=(new ContestRepository())->find((int)$contestId);
-        if(!$contest){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Contest not found.']);}
+        if(!$contest||!(new ContestRepository())->canView((int)$contestId,Auth::id(),Auth::hasRole('ADMIN'))){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Contest not found.']);}
         $this->page('problems/index',['title'=>'Problems','contest'=>$contest,'problems'=>$this->problems->forContest((int)$contestId)]);
     }
 
     public function show(string $id): never
     {
         $problem=$this->problems->find((int)$id);
-        if(!$problem){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Problem not found.']);}
+        if(!$problem||!(new ContestRepository())->canView((int)$problem['contest_id'],Auth::id(),Auth::hasRole('ADMIN'))){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Problem not found.']);}
         $this->page('problems/show',['title'=>$problem['problem_code'].'. '.$problem['problem_title'],'problem'=>$problem]);
     }
 

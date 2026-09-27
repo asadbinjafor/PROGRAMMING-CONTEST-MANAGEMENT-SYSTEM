@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace PCMS\Controllers;
 
 use PCMS\Repositories\ProblemRepository;
+use PCMS\Repositories\ContestRepository;
 use PCMS\Repositories\SubmissionRepository;
 use PCMS\Support\Auth;
 use PCMS\Support\Flash;
@@ -18,7 +19,7 @@ final class SubmissionController extends BaseController
 
     public function form(string $problemId): never
     {
-        $problem=(new ProblemRepository())->find((int)$problemId);if(!$problem){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Problem not found.']);}
+        $problem=(new ProblemRepository())->find((int)$problemId);if(!$problem||!(new ContestRepository())->canView((int)$problem['contest_id'],Auth::id())){http_response_code(404);$this->page('errors/status',['title'=>'Not found','code'=>404,'message'=>'Problem not found.']);}
         $this->page('submissions/form',['title'=>'Submit solution','problem'=>$problem,'errors'=>$this->errors(),'old'=>$this->old()]);
     }
 

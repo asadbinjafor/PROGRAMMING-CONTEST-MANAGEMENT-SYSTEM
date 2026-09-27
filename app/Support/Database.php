@@ -3,37 +3,54 @@ declare(strict_types=1);
 
 namespace PCMS\Support;
 
+use PDO;
 use RuntimeException;
 use Throwable;
 
 final class Database
 {
-    private static mixed $connection = null;
+    private static ?PDO $connection = null;
 
-    public static function connection(): mixed
+    public static function connection(): PDO
     {
         if (self::$connection !== null) return self::$connection;
-        if (!extension_loaded('oci8')) {
-            throw new RuntimeException('The OCI8 PHP extension is required. Follow the setup section in README.md.');
+        if (!extension_loaded('pdo_pgsql')) throw new RuntimeException('The PDO PostgreSQL extension is required.');
+        $url = Env::get('DATABASE_URL');
+        if ($url) {
+            $parts = parse_url($url);
+            if ($parts === false || !isset($parts['host'], $parts['path'])) throw new RuntimeException('Invalid DATABASE_URL.');
+            $host = $parts['host'];
+            $port = (string)($parts['port'] ?? 5432);
+            $name = ltrim($parts['path'], '/');
+            $user = rawurldecode($parts['user'] ?? '');
+            $password = rawurldecode($parts['pass'] ?? '');
+            parse_str($parts['query'] ?? '', $options);
+            $sslmode = (string)($options['sslmode'] ?? Env::get('DB_SSLMODE', 'require'));
+        } else {
+            $host = (string)Env::get('DB_HOST', '127.0.0.1');
+            $port = (string)Env::get('DB_PORT', '5432');
+            $name = (string)Env::get('DB_NAME', 'pcms');
+            $user = (string)Env::get('DB_USER', 'pcms');
+            $password = (string)Env::get('DB_PASSWORD', '');
+            $sslmode = (string)Env::get('DB_SSLMODE', 'require');
         }
-        $descriptor = sprintf('//%s:%s/%s', Env::get('DB_HOST', '127.0.0.1'), Env::get('DB_PORT', '1521'), Env::get('DB_SERVICE', 'XE'));
-        $connection = @\oci_connect(Env::get('DB_USERNAME', ''), Env::get('DB_PASSWORD', ''), $descriptor, Env::get('DB_CHARSET', 'AL32UTF8'));
-        if ($connection === false) {
-            $error = \oci_error();
-            throw new RuntimeException('Oracle connection failed: ' . ($error['message'] ?? 'unknown error'));
+        if (!in_array($sslmode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) throw new RuntimeException('Invalid DB_SSLMODE.');
+        foreach ([$host, $port, $name, $sslmode] as $part) {
+            if (str_contains($part, ';') || str_contains($part, "\n")) throw new RuntimeException('Invalid database configuration.');
         }
-        return self::$connection = $connection;
+        $dsn = "pgsql:host={$host};port={$port};dbname={$name};sslmode={$sslmode}";
+        return self::$connection = new PDO($dsn, $user, $password, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
     }
 
     public static function all(string $sql, array $params = []): array
     {
-        $statement = self::statement($sql, $params);
-        $rows = [];
-        while (($row = \oci_fetch_array($statement, OCI_ASSOC | OCI_RETURN_NULLS | OCI_RETURN_LOBS)) !== false) {
-            $rows[] = array_change_key_case($row, CASE_LOWER);
-        }
-        \oci_free_statement($statement);
-        return $rows;
+        $statement = self::connection()->prepare($sql);
+        $statement->execute($params);
+        return $statement->fetchAll();
     }
 
     public static function one(string $sql, array $params = []): ?array
@@ -49,41 +66,23 @@ final class Database
 
     public static function execute(string $sql, array $params = [], bool $commit = true): int
     {
-        $statement = self::statement($sql, $params, $commit ? 32 : 0);
-        $count = \oci_num_rows($statement);
-        \oci_free_statement($statement);
-        return $count;
+        $statement = self::connection()->prepare($sql);
+        $statement->execute($params);
+        return $statement->rowCount();
     }
 
     public static function transaction(callable $callback): mixed
     {
         $connection = self::connection();
+        $connection->beginTransaction();
         try {
             $result = $callback();
-            \oci_commit($connection);
+            $connection->commit();
             return $result;
         } catch (Throwable $error) {
-            \oci_rollback($connection);
+            if ($connection->inTransaction()) $connection->rollBack();
             throw $error;
         }
     }
 
-    private static function statement(string $sql, array $params, int $mode = 0): mixed
-    {
-        $connection = self::connection();
-        $statement = \oci_parse($connection, $sql);
-        if ($statement === false) throw new RuntimeException('Unable to parse database statement.');
-        $bindings = [];
-        foreach ($params as $name => $value) {
-            $key = ':' . ltrim((string)$name, ':');
-            $bindings[$key] = $value;
-            \oci_bind_by_name($statement, $key, $bindings[$key], -1);
-        }
-        if (!@\oci_execute($statement, $mode)) {
-            $error = \oci_error($statement);
-            \oci_free_statement($statement);
-            throw new RuntimeException('Database operation failed: ' . ($error['message'] ?? 'unknown error'));
-        }
-        return $statement;
-    }
 }

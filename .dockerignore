@@ -1,0 +1,10 @@
+.git
+.env
+*.pdf
+*.docx
+*.pptx
+tools/
+tmp/
+storage/logs/
+database/import_report_2026.php
+database/0*.sql

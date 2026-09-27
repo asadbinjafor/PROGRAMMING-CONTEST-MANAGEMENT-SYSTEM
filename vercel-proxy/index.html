@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>PCMS · Connecting</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; background: #f5f7fb; color: #16223a; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 1rem; box-sizing: border-box; }
+    main { width: min(100%, 29rem); background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 16px 45px #12264b16; }
+    h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+    p { margin: .5rem 0 1.4rem; color: #43506b; }
+    #status { min-height: 2rem; margin-bottom: 1rem; }
+    button { border: 0; border-radius: .5rem; background: #2856b6; color: white; font: inherit; padding: .7rem 1rem; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #12264b; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Programming Contest Management System</h1>
+    <p>The application is starting. This page checks the server and opens PCMS when it responds.</p>
+    <div id="status" role="status" aria-live="polite">Checking connection…</div>
+    <button id="retry" type="button">Retry now</button>
+  </main>
+  <script>
+    (() => {
+      const renderHost = 'https://REPLACE_WITH_RENDER_HOST.onrender.com';
+      const status = document.getElementById('status');
+      const retry = document.getElementById('retry');
+      let successes = 0;
+      let timer;
+      let running = false;
+
+      async function isReady(path) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        try {
+          const response = await fetch(path + '?startup=' + Date.now(), { cache: 'no-store', signal: controller.signal });
+          return response.status === 200;
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      async function check() {
+        if (running) return;
+        running = true;
+        clearTimeout(timer);
+        if (renderHost.includes('REPLACE_WITH_RENDER_HOST')) {
+          status.textContent = 'Render URL is not configured yet. See DEPLOYMENT_GUIDE.md.';
+          running = false;
+          return;
+        }
+        status.textContent = successes ? 'Server responded. Confirming connection…' : 'Checking server connection…';
+        try {
+          const [health, home] = await Promise.all([isReady('/health.php'), isReady('/__render_home')]);
+          if (health && home) {
+            successes += 1;
+            if (successes >= 2) { location.replace('/contests'); return; }
+            status.textContent = 'Server is ready. Confirming once more…';
+          } else {
+            successes = 0;
+            status.textContent = 'Server is waking up. Retrying in 5 seconds…';
+          }
+        } catch (_) {
+          successes = 0;
+          status.textContent = 'Connection is not ready. Retrying in 5 seconds…';
+        } finally {
+          running = false;
+          timer = setTimeout(check, 5000);
+        }
+      }
+      retry.addEventListener('click', check);
+      check();
+    })();
+  </script>
+</body>
+</html>

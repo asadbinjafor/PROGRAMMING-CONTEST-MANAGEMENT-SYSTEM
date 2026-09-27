@@ -33,13 +33,13 @@ final class AdminController extends BaseController
         $decision=(string)input('decision');$reason=trim((string)input('reason'))?:null;
         if(!in_array($decision,['APPROVED','REJECTED'],true)||($decision==='REJECTED'&&!$reason)){Flash::add('error','A valid decision and rejection reason are required.');redirect('/admin/approvals');}
         (new ContestRepository())->approve((int)$id,$decision,$reason);
-        Database::execute("INSERT INTO audit_log(audit_id,actor_user_id,action_code,entity_type,entity_id,details,ip_address) VALUES(seq_audit_log.NEXTVAL,:actor,:action,'CONTEST',:id,:details,:ip)",['actor'=>\PCMS\Support\Auth::id(),'action'=>'CONTEST_'.$decision,'id'=>(int)$id,'details'=>$reason,'ip'=>$_SERVER['REMOTE_ADDR']??null]);
+        Database::execute("INSERT INTO audit_log(actor_user_id,action_code,entity_type,entity_id,details,ip_address) VALUES(:actor,:action,'CONTEST',:id,:details,:ip)",['actor'=>\PCMS\Support\Auth::id(),'action'=>'CONTEST_'.$decision,'id'=>(int)$id,'details'=>$reason,'ip'=>$_SERVER['REMOTE_ADDR']??null]);
         Flash::add('success','Contest decision saved.');redirect('/admin/approvals');
     }
 
     public function audit(): never
     {
-        $rows=Database::all('SELECT * FROM (SELECT a.*,u.user_name actor_name FROM audit_log a LEFT JOIN app_user u ON u.user_id=a.actor_user_id ORDER BY a.created_at DESC) WHERE ROWNUM<=200');
+        $rows=Database::all('SELECT a.*,u.user_name actor_name FROM audit_log a LEFT JOIN app_user u ON u.user_id=a.actor_user_id ORDER BY a.created_at DESC LIMIT 200');
         $this->page('admin/audit',['title'=>'Audit log','rows'=>$rows]);
     }
 
@@ -51,7 +51,7 @@ final class AdminController extends BaseController
 
     public function submissions(): never
     {
-        $rows=Database::all('SELECT * FROM (SELECT s.submission_id,s.verdict,s.language,s.submitted_at,p.problem_title,c.contest_title,u.user_name FROM submission s JOIN problem p ON p.problem_id=s.problem_id JOIN contest c ON c.contest_id=p.contest_id JOIN app_user u ON u.user_id=s.user_id ORDER BY s.submitted_at DESC) WHERE ROWNUM<=200');
+        $rows=Database::all('SELECT s.submission_id,s.verdict,s.language,s.submitted_at,p.problem_title,c.contest_title,u.user_name FROM submission s JOIN problem p ON p.problem_id=s.problem_id JOIN contest c ON c.contest_id=p.contest_id JOIN app_user u ON u.user_id=s.user_id ORDER BY s.submitted_at DESC LIMIT 200');
         $this->page('submissions/manage',['title'=>'All submissions','submissions'=>$rows]);
     }
 }

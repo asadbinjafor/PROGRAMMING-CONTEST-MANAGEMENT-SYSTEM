@@ -22,7 +22,7 @@ final class ContestController extends BaseController
 
     public function show(string $id): never
     {
-        $contest=$this->contests->find((int)$id);if(!$contest)$this->notFound();
+        $contest=$this->contests->find((int)$id);if(!$contest||!$this->contests->canView((int)$id,Auth::id(),Auth::hasRole('ADMIN')))$this->notFound();
         $registered=false;if(Auth::check())foreach($this->contests->registrations(Auth::id()) as $r)if((int)$r['contest_id']===(int)$id&&$r['registration_status']==='REGISTERED')$registered=true;
         $this->page('contests/show',['title'=>$contest['contest_title'],'contest'=>$contest,'problems'=>(new ProblemRepository())->forContest((int)$id),'registered'=>$registered]);
     }

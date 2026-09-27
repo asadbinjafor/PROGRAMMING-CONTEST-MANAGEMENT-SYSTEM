@@ -37,7 +37,7 @@ final class DashboardRepository
             'contests'=>(int)Database::scalar('SELECT COUNT(*) FROM contest'),
             'pending'=>(int)Database::scalar("SELECT COUNT(*) FROM contest WHERE approval_status='PENDING_APPROVAL'"),
             'submissions'=>(int)Database::scalar('SELECT COUNT(*) FROM submission'),
-            'audit'=>Database::all('SELECT * FROM (SELECT a.*,u.user_name actor_name FROM audit_log a LEFT JOIN app_user u ON u.user_id=a.actor_user_id ORDER BY a.created_at DESC) WHERE ROWNUM<=20'),
+            'audit'=>Database::all('SELECT a.*,u.user_name actor_name FROM audit_log a LEFT JOIN app_user u ON u.user_id=a.actor_user_id ORDER BY a.created_at DESC LIMIT 20'),
         ];
     }
 }

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/__render_home", "destination": "https://REPLACE_WITH_RENDER_HOST.onrender.com/" },
+    { "source": "/:path*", "destination": "https://REPLACE_WITH_RENDER_HOST.onrender.com/:path*" }
+  ]
+}

@@ -36,10 +36,10 @@ foreach($routes as $route){
 }
 $assert(!preg_match('/CodeElite|href=["\\x27]#["\\x27]/',implode('',array_map(fn($f)=>file_get_contents($f),glob(dirname(__DIR__).'/app/Views/*/*.php')?:[]))),'Views must not contain stale branding or dead hash links.');
 
-$sql=implode(PHP_EOL,array_map(fn($f)=>file_get_contents($f),glob(dirname(__DIR__).'/database/*.sql')?:[]));
-$assert(str_contains($sql,'CONTEST_REGISTRATION'),'Registration table must exist.');
-$assert(str_contains($sql,'SEQ_ANNOUNCEMENT'),'Announcement sequence must exist.');
-$assert(!str_contains($sql,'NOT SET’'),'SQL must not contain typographic quote defect.');
+$sql=file_get_contents(dirname(__DIR__).'/database/postgres/01_schema.sql');
+$assert(str_contains($sql,'CREATE TABLE contest_registration'),'Registration table must exist.');
+$assert(str_contains($sql,'CREATE SEQUENCE seq_announcement'),'Announcement sequence must exist.');
+$assert(str_contains($sql,'ENABLE ROW LEVEL SECURITY'),'PostgreSQL tables must enable RLS.');
 
 if($failures){foreach($failures as $failure)fwrite(STDERR,"FAIL: {$failure}".PHP_EOL);exit(1);}
 echo "All ".(count($routes)+10)." smoke assertions passed.".PHP_EOL;
